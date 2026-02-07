@@ -1,0 +1,59 @@
+.tree-view-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-xl);
+}
+
+.tree-view {
+    background: var(--color-bg-glass);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    backdrop-filter: blur(20px);
+    box-shadow: var(--shadow-lg);
+    min-height: 400px;
+}
+
+/* Empty State */
+.tree-view:empty::before {
+    content: 'No items in tree. Add a root node to get started.';
+    display: block;
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: var(--spacing-xl);
+    font-style: italic;
+}
+
+/* Drag & Drop Overlay */
+.tree-view-drag-overlay {
+    background: var(--color-bg-glass);
+    border: 1px solid var(--color-accent-primary);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-glow);
+    backdrop-filter: blur(10px);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .tree-view-container {
+        padding: var(--spacing-md);
+    }
+
+    .tree-view {
+        padding: var(--spacing-md);
+        border-radius: var(--radius-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    .tree-view-container {
+        padding: var(--spacing-sm);
+    }
+
+    .tree-view {
+        padding: var(--spacing-sm);
+        border-radius: var(--radius-md);
+    }
+}
