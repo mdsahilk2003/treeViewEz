@@ -1,10 +1,10 @@
 # Tree View Component
 
-A fully functional, beautiful Tree View component built with React + TypeScript featuring expand/collapse, add/remove nodes, drag & drop, lazy loading, and inline editing capabilities.
+A fully functional, beautiful Tree View component built with React + TypeScript featuring expand/collapse, add/remove nodes, drag & drop, lazy loading, and inline editing capabilities with MongoDB persistence.
 
 ![Tree View Component](https://img.shields.io/badge/React-18.2.0-61DAFB?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-3178C6?logo=typescript)
-![Vite](https://img.shields.io/badge/Vite-5.0.8-646CFF?logo=vite)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb)
 
 ## ✨ Features
 
@@ -14,6 +14,7 @@ A fully functional, beautiful Tree View component built with React + TypeScript 
 - ✏️ **Inline Editing** - Double-click to edit node names
 - 🎯 **Drag & Drop** - Reorder nodes with accessible drag handles
 - ⚡ **Lazy Loading** - Load children asynchronously on demand
+- 💾 **Auto-Save** - Automatic MongoDB persistence
 - 📱 **Mobile-First** - Responsive design with touch-friendly interactions
 - 🎨 **Beautiful UI** - Modern glassmorphism with smooth animations
 
@@ -22,24 +23,25 @@ A fully functional, beautiful Tree View component built with React + TypeScript 
 ### Installation
 
 ```bash
-# Clone or navigate to the project
-cd e:\treeViewEz
+# Clone repository
+git clone <your-repo-url>
+cd treeViewEz
 
 # Install dependencies
 npm install
 
-# Start development server
+# Start backend server
+node server-simple.js
+
+# In another terminal, start frontend
 npm run dev
 ```
 
 Visit `http://localhost:5173` to see the component in action.
 
-### Build for Production
+## 🌐 Live Demo
 
-```bash
-npm run build
-npm run preview
-```
+🔗 **[View Live Demo](#)** _(Will be updated after deployment)_
 
 ## 📖 Usage
 
@@ -55,39 +57,12 @@ const data: TreeNode[] = [
     name: 'Root Folder',
     children: [
       { id: '1-1', name: 'Child 1', children: [] },
-      { id: '1-2', name: 'Child 2', children: [] },
     ],
   },
 ];
 
 function App() {
   return <TreeView data={data} />;
-}
-```
-
-### With All Features
-
-```tsx
-import { useState } from 'react';
-import TreeView from './components/TreeView';
-import { TreeNode } from './types';
-
-function App() {
-  const [treeData, setTreeData] = useState<TreeNode[]>(initialData);
-
-  const handleLazyLoad = async (nodeId: string): Promise<TreeNode[]> => {
-    // Fetch children from API
-    const response = await fetch(`/api/nodes/${nodeId}/children`);
-    return response.json();
-  };
-
-  return (
-    <TreeView
-      data={treeData}
-      onDataChange={setTreeData}
-      onLazyLoad={handleLazyLoad}
-    />
-  );
 }
 ```
 
@@ -102,162 +77,72 @@ function App() {
 | **Drag to Reorder** | Use the grip handle |
 | **Lazy Load** | Expand nodes marked with `hasChildren: true` |
 
-## 🏗️ Project Structure
+## 🛠️ Tech Stack
+
+- **Frontend**: React 18, TypeScript, Vite
+- **Backend**: Express.js, Node.js
+- **Database**: MongoDB (optional)
+- **Drag & Drop**: @dnd-kit
+- **Icons**: Lucide React
+- **Styling**: CSS with custom design tokens
+
+## 📦 Project Structure
 
 ```
-src/
-├── components/
-│   ├── TreeView.tsx          # Main container component
-│   ├── TreeView.css          # Container styles
-│   ├── TreeNode.tsx          # Individual node component
-│   ├── TreeNode.css          # Node styles
-│   ├── ConfirmDialog.tsx     # Confirmation modal
-│   └── ConfirmDialog.css     # Modal styles
-├── types.ts                  # TypeScript interfaces
-├── App.tsx                   # Demo application
-├── App.css                   # App styles
-├── main.tsx                  # Entry point
-└── index.css                 # Global styles
+treeViewEz/
+├── api/                    # Backend API
+│   ├── models/            # MongoDB models
+│   ├── routes/            # API routes
+│   └── server.js          # Express server
+├── src/                   # Frontend
+│   ├── components/        # React components
+│   ├── services/          # API service layer
+│   └── App.tsx           # Main app
+├── server-simple.js       # Standalone server (no MongoDB)
+└── vercel.json           # Vercel deployment config
 ```
 
-## 🎨 Design System
+## 🌍 Deployment
 
-### Color Palette
-- **Background**: Dark gradient (`#0a0e1a` → `#1a1f35`)
-- **Accent**: Indigo/Purple (`#6366f1` → `#8b5cf6`)
-- **Success**: Green (`#10b981`)
-- **Danger**: Red (`#ef4444`)
+### Deploy to Vercel
 
-### Typography
-- **Font**: Inter (Google Fonts)
-- **Responsive**: 13px → 16px based on screen size
+```bash
+# Install Vercel CLI
+npm install -g vercel
 
-### Effects
-- **Glassmorphism**: Backdrop blur with semi-transparent backgrounds
-- **Animations**: Smooth transitions on all interactions
-- **Shadows**: Layered depth with glow effects
+# Deploy
+vercel
 
-## 📦 Dependencies
-
-### Core
-- `react` - UI library
-- `react-dom` - DOM rendering
-- `typescript` - Type safety
-
-### Drag & Drop
-- `@dnd-kit/core` - Drag & drop core
-- `@dnd-kit/sortable` - Sortable utilities
-- `@dnd-kit/utilities` - Helper functions
-
-### UI
-- `lucide-react` - Icon library
-
-### Build Tools
-- `vite` - Fast build tool
-- `@vitejs/plugin-react` - React plugin
-
-## 🔧 API Reference
-
-### TreeNode Interface
-
-```typescript
-interface TreeNode {
-  id: string;              // Unique identifier
-  name: string;            // Display name
-  children?: TreeNode[];   // Nested children
-  isExpanded?: boolean;    // Expansion state
-  isLoading?: boolean;     // Loading indicator
-  hasChildren?: boolean;   // Lazy load flag
-}
+# For production
+vercel --prod
 ```
 
-### TreeView Props
+### Environment Variables
 
-```typescript
-interface TreeViewProps {
-  data: TreeNode[];                              // Tree data
-  onDataChange?: (data: TreeNode[]) => void;     // Data change callback
-  onLazyLoad?: (nodeId: string) => Promise<TreeNode[]>; // Lazy load handler
-}
+Add to Vercel dashboard:
+- `MONGODB_URI` - Your MongoDB connection string (optional)
+
+## 🔧 Development
+
+```bash
+# Start backend
+node server-simple.js
+
+# Start frontend
+npm run dev
+
+# Build for production
+npm run build
 ```
 
-## 🎯 Features in Detail
-
-### Expand/Collapse
-- Click chevron icon to toggle
-- Smooth rotation animation
-- Maintains state across interactions
-
-### Add Node
-- Inline input with keyboard support
-- Enter to confirm, Escape to cancel
-- Auto-expands parent node
-
-### Delete Node
-- Confirmation dialog before deletion
-- Deletes entire subtree
-- Glassmorphism modal overlay
-
-### Inline Editing
-- Double-click to activate
-- Save with Enter or check button
-- Cancel with Escape or X button
-
-### Drag & Drop
-- Accessible with keyboard support
-- Visual feedback during drag
-- Touch-friendly for mobile
-
-### Lazy Loading
-- Async children loading
-- Loading spinner animation
-- Error handling included
-
-## 📱 Responsive Design
-
-- **Mobile**: 320px+ (compact spacing, visible actions)
-- **Tablet**: 768px+ (medium spacing)
-- **Desktop**: 1024px+ (full spacing, hover actions)
-
-## 🚀 Performance
-
-- **Recursive Rendering**: Efficient component reuse
-- **Immutable Updates**: Predictable state changes
-- **CSS Animations**: Hardware-accelerated transitions
-- **Lazy Loading**: Load data only when needed
-
-## 🎨 Customization
-
-All styles use CSS variables for easy theming:
-
-```css
-:root {
-  --color-accent-primary: #6366f1;
-  --color-bg-primary: #0a0e1a;
-  --spacing-md: 1rem;
-  --radius-md: 0.5rem;
-  /* ... and more */
-}
-```
-
-## 📄 License
+## 📝 License
 
 MIT
 
-## 🤝 Contributing
+## 👨‍💻 Author
 
-Contributions welcome! This is a demo project showcasing modern React patterns.
-
-## 💡 Future Enhancements
-
-- [ ] Advanced drag & drop (cross-parent moves)
-- [ ] Search and filter functionality
-- [ ] Keyboard navigation (arrow keys)
-- [ ] Context menu (right-click)
-- [ ] Virtualization for large trees
-- [ ] Undo/Redo support
-- [ ] Export/Import JSON
+Built with ❤️ using React + TypeScript + MongoDB
 
 ---
 
-Built with ❤️ using React + TypeScript + Vite
+⭐ Star this repo if you found it helpful!
