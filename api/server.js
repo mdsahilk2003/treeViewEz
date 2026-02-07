@@ -1,6 +1,7 @@
-require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
 
@@ -8,8 +9,35 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// In-memory storage (fallback when MongoDB is not available)
-let treeData = [
+// --- MongoDB Configuration ---
+const MONGODB_URI = process.env.MONGODB_URI;
+let isConnected = false;
+
+// Connect to MongoDB
+if (MONGODB_URI) {
+    mongoose.connect(MONGODB_URI)
+        .then(() => {
+            console.log('✅ Connected to MongoDB Successfully!');
+            isConnected = true;
+        })
+        .catch((err) => {
+            console.error('❌ MongoDB Connection Failed:', err.message);
+            console.log('⚠️ Falling back to in-memory storage.');
+        });
+} else {
+    console.warn('⚠️ MONGODB_URI not found in .env. Using in-memory storage.');
+}
+
+// Define Schema for Tree Data
+const TreeSchema = new mongoose.Schema({
+    userId: { type: String, required: true, unique: true }, // Identifier for different users/sessions
+    treeData: { type: Array, default: [] }, // Stores the entire tree structure
+}, { timestamps: true });
+
+const TreeModel = mongoose.model('Tree', TreeSchema);
+
+// Default Initial Data (used if DB is empty or not connected)
+let memoryTreeData = [
     {
         id: '1',
         name: 'Root Folder',
@@ -51,87 +79,121 @@ let treeData = [
     },
 ];
 
-// Routes
-// Get tree data
-app.get('/api/tree', (req, res) => {
-    console.log('📥 GET /api/tree');
-    res.json(treeData);
+// --- Routes ---
+
+// Get Tree Data
+app.get('/api/tree', async (req, res) => {
+    const userId = req.query.userId || 'default-user';
+    console.log(`📥 GET /api/tree (User: ${userId})`);
+
+    if (isConnected) {
+        try {
+            // Try to find data in MongoDB
+            let userTree = await TreeModel.findOne({ userId });
+
+            if (!userTree) {
+                // If not found, create initial data
+                console.log('✨ Creating new tree for user...');
+                userTree = await TreeModel.create({
+                    userId,
+                    treeData: memoryTreeData
+                });
+            }
+            return res.json(userTree.treeData);
+        } catch (error) {
+            console.error('Error fetching from MongoDB:', error);
+            // Fallback to memory on error
+            return res.json(memoryTreeData);
+        }
+    } else {
+        // Return in-memory data if not connected
+        return res.json(memoryTreeData);
+    }
 });
 
-// Save tree data
-app.post('/api/tree', (req, res) => {
-    console.log('💾 POST /api/tree');
-    const { nodes } = req.body;
-    treeData = nodes;
-    res.json({ success: true, tree: treeData });
+// Save Tree Data
+app.post('/api/tree', async (req, res) => {
+    const userId = req.query.userId || 'default-user'; // or from body
+    // The frontend sends { nodes: [...] } usually
+    const nodes = req.body.nodes || req.body;
+
+    console.log(`💾 POST /api/tree (User: ${userId})`);
+
+    if (isConnected) {
+        try {
+            // Update or Insert (upsert)
+            const result = await TreeModel.findOneAndUpdate(
+                { userId },
+                { treeData: nodes },
+                { upsert: true, new: true }
+            );
+            console.log('✅ Saved to MongoDB');
+            return res.json({ success: true, tree: result.treeData });
+        } catch (error) {
+            console.error('Error saving to MongoDB:', error);
+            return res.status(500).json({ error: 'Failed to save data' });
+        }
+    } else {
+        // Update in-memory data
+        memoryTreeData = nodes;
+        console.log('⚠️ Saved to Memory (will be lost on restart)');
+        return res.json({ success: true, tree: memoryTreeData });
+    }
 });
 
-// Lazy load children
+// Lazy Load Children (Mock Data logic preserved)
+// Note: In a real app, this should also query the DB, but for now we keep the logic consistent with simple implementation
 app.get('/api/tree/node/:id/children', async (req, res) => {
     const nodeId = req.params.id;
-    console.log(`⚡ GET /api/tree/node/${nodeId}/children`);
+    console.log(`⚡ Lazy search for node: ${nodeId}`);
 
-    // Simulate delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     let children = [];
-
     if (nodeId === '1-2') {
         children = [
             {
-                id: '1-2-1',
-                name: 'React App',
-                children: [
+                id: '1-2-1', name: 'React App', children: [
                     { id: '1-2-1-1', name: 'src', children: [] },
                     { id: '1-2-1-2', name: 'public', children: [] },
-                    { id: '1-2-1-3', name: 'package.json', children: [] },
-                ],
+                ]
             },
             {
-                id: '1-2-2',
-                name: 'Node.js API',
-                children: [
+                id: '1-2-2', name: 'Node.js API', children: [
                     { id: '1-2-2-1', name: 'routes', children: [] },
-                    { id: '1-2-2-2', name: 'models', children: [] },
-                    { id: '1-2-2-3', name: 'server.js', children: [] },
-                ],
+                ]
             },
         ];
     } else if (nodeId === '2') {
         children = [
-            { id: '2-1', name: 'Team Documents', children: [] },
+            { id: '2-1', name: 'Team Docs', children: [] },
             { id: '2-2', name: 'Meeting Notes', children: [] },
-            {
-                id: '2-3',
-                name: 'Resources',
-                hasChildren: true,
-                children: [],
-            },
-        ];
-    } else if (nodeId === '2-3') {
-        children = [
-            { id: '2-3-1', name: 'Design Assets', children: [] },
-            { id: '2-3-2', name: 'Code Snippets', children: [] },
         ];
     }
 
     res.json(children);
 });
 
-// Health check
+// Health Check
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Server is running (in-memory mode)' });
+    res.json({
+        status: 'ok',
+        mongoConnected: isConnected,
+        environment: process.env.NODE_ENV || 'development'
+    });
 });
 
-// For Vercel serverless functions
-if (process.env.VERCEL) {
-    module.exports = app;
-} else {
-    // Local development
+// Start Server
+if (require.main === module) {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
         console.log(`🚀 Server running on http://localhost:${PORT}`);
-        console.log(`📝 Using in-memory storage (data will not persist on restart)`);
-        console.log(`💡 To use MongoDB, add MONGODB_URI to .env file`);
+        if (!isConnected && !MONGODB_URI) {
+            console.log(`👉 Add MONGODB_URI to .env to enable permanent storage`);
+        }
     });
 }
+
+// Export for Vercel
+module.exports = app;
