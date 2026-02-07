@@ -113,8 +113,8 @@ app.get('/api/tree', async (req, res) => {
 
 // Save Tree Data
 app.post('/api/tree', async (req, res) => {
-    const userId = req.query.userId || 'default-user'; // or from body
-    // The frontend sends { nodes: [...] } usually
+    // Check query params then body for userId
+    const userId = req.query.userId || req.body.userId || 'default-user';
     const nodes = req.body.nodes || req.body;
 
     console.log(`💾 POST /api/tree (User: ${userId})`);
