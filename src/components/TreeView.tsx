@@ -154,8 +154,8 @@ const TreeView: React.FC<TreeViewProps> = ({ data, onDataChange, onLazyLoad }) =
     );
 
     const handleLazyLoad = useCallback(
-        async (nodeId: string) => {
-            if (!onLazyLoad) return;
+        async (nodeId: string): Promise<TreeNodeType[]> => {
+            if (!onLazyLoad) return [];
 
             // Set loading state
             const loadingData = updateNode(treeData, nodeId, { isLoading: true });
@@ -171,10 +171,12 @@ const TreeView: React.FC<TreeViewProps> = ({ data, onDataChange, onLazyLoad }) =
                 });
                 setTreeData(updatedData);
                 onDataChange?.(updatedData);
+                return children;
             } catch (error) {
                 console.error('Error loading children:', error);
                 const errorData = updateNode(treeData, nodeId, { isLoading: false });
                 setTreeData(errorData);
+                return [];
             }
         },
         [treeData, updateNode, onLazyLoad, onDataChange]

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import TreeView from './components/TreeView';
 import { TreeNode } from './types';
 import { FolderTree, Loader2 } from 'lucide-react';
